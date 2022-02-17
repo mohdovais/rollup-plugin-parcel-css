@@ -1,0 +1,36 @@
+{
+  "name": "rollup-plugin-parcel-css",
+  "version": "1.0.0",
+  "description": "Rollup plugin for Parcel CSS",
+  "main": "dist/cjs/index.js",
+  "module": "dist/mjs/index.js",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/mjs/index.js"
+    }
+  },
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "tsc & tsc -p tsconfig-cjs.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mohd Ovais",
+  "license": "MIT",
+  "files": [
+    "./dist/**/*.js",
+    "./dist/**/*.ts",
+    "./src/index.ts"
+  ],
+  "dependencies": {
+    "rollup-pluginutils": "^2.8.2"
+  },
+  "peerDependencies": {
+    "@parcel/css": "*",
+    "rollup": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.18",
+    "typescript": "^4.5.5"
+  }
+}

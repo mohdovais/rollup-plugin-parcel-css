@@ -1,0 +1,12 @@
+.wrapper {
+  padding: 2em;
+  font-size: 200%;
+}
+
+.wrapper.color {
+  color: green;
+}
+
+.unused {
+  color: red;
+}
