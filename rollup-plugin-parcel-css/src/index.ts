@@ -10,10 +10,20 @@ import type {
 
 const cssRe = /(?:\.(module))?\.((?:le|s?c)ss)$/;
 
+const cwd = process.cwd();
+
 const base64 = (str: string) => Buffer.from(str, "utf8").toString("base64");
 
+type SourceMapV3 = {
+  version: 3;
+  mappings: "AAAA";
+  sources: string[];
+  sourcesContent: string[];
+  names: string[];
+};
+
 function mergeSourceMaps(maps: string[]) {
-  const sourcemap = {
+  const mergedSourceMap: SourceMapV3 = {
     version: 3,
     mappings: "AAAA",
     sources: [],
@@ -23,15 +33,18 @@ function mergeSourceMaps(maps: string[]) {
 
   maps.forEach((mapString) => {
     if (mapString !== "") {
-      const map = JSON.parse(mapString);
-      sourcemap.sources = sourcemap.sources.concat(map.sources);
-      sourcemap.sourcesContent = sourcemap.sourcesContent.concat(
-        map.sourcesContent
+      const mapv3 = JSON.parse(mapString) as SourceMapV3;
+
+      mergedSourceMap.sources = mergedSourceMap.sources.concat(
+        mapv3.sources.map((source) => path.relative(cwd, source))
+      );
+      mergedSourceMap.sourcesContent = mergedSourceMap.sourcesContent.concat(
+        mapv3.sourcesContent
       );
     }
   });
 
-  return JSON.stringify(sourcemap);
+  return JSON.stringify(mergedSourceMap);
 }
 
 function transformCSSModuleExports(cssModuleExports: CSSModuleExports) {
@@ -132,7 +145,7 @@ function plugin(options: PluginOptions = {}): Plugin {
 
       return {
         code: result.code,
-        map: null,
+        map: { mappings: "" },
       };
     },
 

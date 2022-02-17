@@ -1,19 +1,44 @@
+/**
+ * @typedef {import("rollup").RollupOptions} RollupOptions
+ */
+
 import css from "rollup-plugin-parcel-css";
 
-/**
- * @type {import("rollup").RollupOptions}
- */
-const config = {
-  input: "src/main.js",
-  output: {
-    file: "build/app.js",
-    format: "umd",
-    amd: {
-      id: "app",
+export default [
+  {
+    input: "src/main.js",
+    output: {
+      file: "build/app.js",
+      format: "iife",
+      sourcemap: true,
     },
-    sourcemap: true,
+    plugins: [css({ minify: false })],
   },
-  plugins: [css({ minify: true })],
-};
-
-export default config;
+  {
+    input: "src/main.js",
+    output: {
+      file: "build/app.min.js",
+      format: "iife",
+      sourcemap: false,
+    },
+    plugins: [css({ minify: true })],
+  },
+  {
+    input: "src/main.js",
+    output: {
+      file: "build/app-inline-sourcemap.js",
+      format: "iife",
+      sourcemap: "inline",
+    },
+    plugins: [css({ minify: false })],
+  },
+  {
+    input: "src/main.js",
+    output: {
+      file: "build/app-inline-sourcemap.min.js",
+      format: "iife",
+      sourcemap: "inline",
+    },
+    plugins: [css({ minify: true })],
+  },
+];

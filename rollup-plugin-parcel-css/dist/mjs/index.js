@@ -2,9 +2,10 @@ import path from "path";
 import css from "@parcel/css";
 import { createFilter } from "rollup-pluginutils";
 const cssRe = /(?:\.(module))?\.((?:le|s?c)ss)$/;
+const cwd = process.cwd();
 const base64 = (str) => Buffer.from(str, "utf8").toString("base64");
 function mergeSourceMaps(maps) {
-    const sourcemap = {
+    const mergedSourceMap = {
         version: 3,
         mappings: "AAAA",
         sources: [],
@@ -13,12 +14,12 @@ function mergeSourceMaps(maps) {
     };
     maps.forEach((mapString) => {
         if (mapString !== "") {
-            const map = JSON.parse(mapString);
-            sourcemap.sources = sourcemap.sources.concat(map.sources);
-            sourcemap.sourcesContent = sourcemap.sourcesContent.concat(map.sourcesContent);
+            const mapv3 = JSON.parse(mapString);
+            mergedSourceMap.sources = mergedSourceMap.sources.concat(mapv3.sources.map((source) => path.relative(cwd, source)));
+            mergedSourceMap.sourcesContent = mergedSourceMap.sourcesContent.concat(mapv3.sourcesContent);
         }
     });
-    return JSON.stringify(sourcemap);
+    return JSON.stringify(mergedSourceMap);
 }
 function transformCSSModuleExports(cssModuleExports) {
     const keys = Object.keys(cssModuleExports || {});
@@ -89,7 +90,7 @@ function plugin(options = {}) {
             });
             return {
                 code: result.code,
-                map: null,
+                map: { mappings: "" },
             };
         },
         async renderChunk(_, chunk, outputOptions) {
