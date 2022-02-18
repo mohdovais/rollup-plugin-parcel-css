@@ -1,57 +1,20 @@
 import path from "path";
 import css from "@parcel/css";
+import { base64, mergeSourceMaps } from "./utils";
+import { hasLoaderForFile, resolveLoaders, runLoaders } from "./loaders";
 import { createFilter } from "rollup-pluginutils";
 import type { Plugin } from "rollup";
-import type {
-  TransformOptions,
-  CSSModuleExports,
-  Dependency,
-} from "@parcel/css";
+import type { TransformOptions, CSSModuleExports } from "@parcel/css";
+import type { Cache, Lang, PluginOptions, TransformResult } from "./types";
 
-const cssRe = /(?:\.(module))?\.((?:le|s?c)ss)$/;
-
-const cwd = process.cwd();
-
-const base64 = (str: string) => Buffer.from(str, "utf8").toString("base64");
-
-type SourceMapV3 = {
-  version: 3;
-  mappings: "AAAA";
-  sources: string[];
-  sourcesContent: string[];
-  names: string[];
-};
-
-function mergeSourceMaps(maps: string[]) {
-  const mergedSourceMap: SourceMapV3 = {
-    version: 3,
-    mappings: "AAAA",
-    sources: [],
-    sourcesContent: [],
-    names: [],
-  };
-
-  maps.forEach((mapString) => {
-    if (mapString !== "") {
-      const mapv3 = JSON.parse(mapString) as SourceMapV3;
-
-      mergedSourceMap.sources = mergedSourceMap.sources.concat(
-        mapv3.sources.map((source) => path.relative(cwd, source))
-      );
-      mergedSourceMap.sourcesContent = mergedSourceMap.sourcesContent.concat(
-        mapv3.sourcesContent
-      );
-    }
-  });
-
-  return JSON.stringify(mergedSourceMap);
-}
+const cssRe = /\.css$/;
+const moduleRe = /\.module\.[a-zA-Z0-9]+$/;
 
 function transformCSSModuleExports(cssModuleExports: CSSModuleExports) {
   const keys = Object.keys(cssModuleExports || {});
   let file = "";
   keys.forEach((key) => {
-    file += `export const ${key} = "${cssModuleExports[key].name}"\n`;
+    file += `export const ${key} = "${cssModuleExports[key].name};"\n`;
   });
   if (keys.length > 0) {
     file += `export default { ${keys.join(", ")} }\n`;
@@ -60,14 +23,6 @@ function transformCSSModuleExports(cssModuleExports: CSSModuleExports) {
   }
   return file;
 }
-
-type TransformResult = {
-  id: string;
-  code: string;
-  map: string;
-  transformedCode: string;
-  dependencies: void | Dependency[];
-};
 
 function tranform(options: TransformOptions): Promise<TransformResult> {
   return new Promise((resolve, reject) => {
@@ -83,34 +38,24 @@ function tranform(options: TransformOptions): Promise<TransformResult> {
   });
 }
 
-type PluginOptions = {
-  include?: string | RegExp | (string | RegExp)[];
-  exclude?: string | RegExp | (string | RegExp)[];
-  minify?: boolean;
-};
-
-type Cache = {
-  source: string;
-  isModule: boolean;
-};
-
 function plugin(options: PluginOptions = {}): Plugin {
-  const filter = createFilter(options.include, options.exclude);
+  const rollupFilter = createFilter(options.include, options.exclude);
   const { minify = false } = options;
   const cache = new Map<string, Cache>();
   const seenNonCSSModuleIds = new Map<string, string[]>();
+  const loaders = resolveLoaders(options.loaders);
+  const filter = (fileName: string) => {
+    return (
+      rollupFilter(fileName) &&
+      (cssRe.test(fileName) || hasLoaderForFile(loaders, fileName))
+    );
+  };
 
   return {
     name: "parcel-css",
 
     async resolveId(source, importer) {
-      const exec = cssRe.exec(source);
-      if (
-        filter(source) &&
-        exec != null &&
-        exec[1] == null &&
-        importer != null
-      ) {
+      if (filter(source) && importer != null && !moduleRe.test(source)) {
         const id = path.resolve(path.dirname(importer), source);
         const idArray = seenNonCSSModuleIds.get(importer);
 
@@ -123,23 +68,23 @@ function plugin(options: PluginOptions = {}): Plugin {
       return null;
     },
 
-    async transform(fileContent, fileName) {
-      const exec = cssRe.exec(fileName);
-      if (!filter(fileName) || exec == null) {
+    async transform(code, fileName) {
+      if (!filter(fileName)) {
         return null;
       }
-      const cssModules = exec[1] === "module";
-      const type = exec[2]; // less/scss @todo
+
+      const cssModules = moduleRe.test(fileName);
+      const preprocess = await runLoaders(loaders, code, fileName);
 
       const result = await tranform({
-        code: Buffer.from(fileContent),
+        code: Buffer.from(preprocess.css),
         filename: fileName,
         cssModules,
         analyzeDependencies: true,
       });
 
       cache.set(fileName, {
-        source: fileContent,
+        source: preprocess.css,
         isModule: cssModules,
       });
 
@@ -214,4 +159,5 @@ function plugin(options: PluginOptions = {}): Plugin {
     },
   };
 }
+
 export default plugin;

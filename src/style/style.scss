@@ -1,0 +1,13 @@
+
+@use "../p2";
+@use "../partial";
+
+header {
+  height: 30%;
+  width: 100%;
+  background-color: partial.$font-stack;
+  border-top: 2px solid p2.$primary-color;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 2;
+}

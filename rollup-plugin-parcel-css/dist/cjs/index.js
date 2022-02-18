@@ -5,32 +5,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
 const css_1 = __importDefault(require("@parcel/css"));
+const utils_1 = require("./utils");
+const loaders_1 = require("./loaders");
 const rollup_pluginutils_1 = require("rollup-pluginutils");
-const cssRe = /(?:\.(module))?\.((?:le|s?c)ss)$/;
-const cwd = process.cwd();
-const base64 = (str) => Buffer.from(str, "utf8").toString("base64");
-function mergeSourceMaps(maps) {
-    const mergedSourceMap = {
-        version: 3,
-        mappings: "AAAA",
-        sources: [],
-        sourcesContent: [],
-        names: [],
-    };
-    maps.forEach((mapString) => {
-        if (mapString !== "") {
-            const mapv3 = JSON.parse(mapString);
-            mergedSourceMap.sources = mergedSourceMap.sources.concat(mapv3.sources.map((source) => path_1.default.relative(cwd, source)));
-            mergedSourceMap.sourcesContent = mergedSourceMap.sourcesContent.concat(mapv3.sourcesContent);
-        }
-    });
-    return JSON.stringify(mergedSourceMap);
-}
+const cssRe = /\.css$/;
+const moduleRe = /\.module\.[a-zA-Z0-9]+$/;
 function transformCSSModuleExports(cssModuleExports) {
     const keys = Object.keys(cssModuleExports || {});
     let file = "";
     keys.forEach((key) => {
-        file += `export const ${key} = "${cssModuleExports[key].name}"\n`;
+        file += `export const ${key} = "${cssModuleExports[key].name};"\n`;
     });
     if (keys.length > 0) {
         file += `export default { ${keys.join(", ")} }\n`;
@@ -53,18 +37,19 @@ function tranform(options) {
     });
 }
 function plugin(options = {}) {
-    const filter = (0, rollup_pluginutils_1.createFilter)(options.include, options.exclude);
+    const rollupFilter = (0, rollup_pluginutils_1.createFilter)(options.include, options.exclude);
     const { minify = false } = options;
     const cache = new Map();
     const seenNonCSSModuleIds = new Map();
+    const loaders = (0, loaders_1.resolveLoaders)(options.loaders);
+    const filter = (fileName) => {
+        return (rollupFilter(fileName) &&
+            (cssRe.test(fileName) || (0, loaders_1.hasLoaderForFile)(loaders, fileName)));
+    };
     return {
         name: "parcel-css",
         async resolveId(source, importer) {
-            const exec = cssRe.exec(source);
-            if (filter(source) &&
-                exec != null &&
-                exec[1] == null &&
-                importer != null) {
+            if (filter(source) && importer != null && !moduleRe.test(source)) {
                 const id = path_1.default.resolve(path_1.default.dirname(importer), source);
                 const idArray = seenNonCSSModuleIds.get(importer);
                 if (idArray) {
@@ -76,21 +61,21 @@ function plugin(options = {}) {
             }
             return null;
         },
-        async transform(fileContent, fileName) {
-            const exec = cssRe.exec(fileName);
-            if (!filter(fileName) || exec == null) {
+        async transform(code, fileName) {
+            if (!filter(fileName)) {
                 return null;
             }
-            const cssModules = exec[1] === "module";
-            const type = exec[2]; // less/scss @todo
+            const cssModules = moduleRe.test(fileName);
+            const preprocess = await (0, loaders_1.runLoaders)(loaders, code, fileName);
+            console.log(fileName, preprocess.dependencies);
             const result = await tranform({
-                code: Buffer.from(fileContent),
+                code: Buffer.from(preprocess.css),
                 filename: fileName,
                 cssModules,
                 analyzeDependencies: true,
             });
             cache.set(fileName, {
-                source: fileContent,
+                source: preprocess.css,
                 isModule: cssModules,
             });
             return {
@@ -130,9 +115,9 @@ function plugin(options = {}) {
             }));
             let sources = results.map((r) => r.transformedCode).join("");
             if (sources !== "") {
-                let sourceMaps = mergeSourceMaps(results.map((r) => r.map));
+                let sourceMaps = (0, utils_1.mergeSourceMaps)(results.map((r) => r.map));
                 if (sourceMapOption === "inline") {
-                    sources += `\n/*# sourceMappingURL=data:application/json;base64,${base64(sourceMaps)}*/`;
+                    sources += `\n/*# sourceMappingURL=data:application/json;base64,${(0, utils_1.base64)(sourceMaps)}*/`;
                 }
                 else if (sourceMapOption === true) {
                     sources += `\n/*# sourceMappingURL=${path_1.default.basename(fileName)}.map */`;

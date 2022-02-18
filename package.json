@@ -18,5 +18,8 @@
   },
   "workspaces": [
     "rollup-plugin-parcel-css"
-  ]
+  ],
+  "devDependencies": {
+    "sass": "^1.49.8"
+  }
 }
