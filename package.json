@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "pretest": "npm run build -w rollup-plugin-parcel-css",
-    "test": "npm test -w testing"
+    "test": "npm run build -workspaces"
   },
   "author": "Mohd Ovais",
   "license": "MIT",
@@ -13,6 +13,6 @@
   },
   "workspaces": [
     "rollup-plugin-parcel-css",
-    "testing"
+    "testing/**"
   ]
 }

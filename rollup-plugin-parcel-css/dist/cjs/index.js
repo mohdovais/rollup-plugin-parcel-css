@@ -11,27 +11,36 @@ const rollup_pluginutils_1 = require("rollup-pluginutils");
 const cssRe = /\.css$/;
 const moduleRe = /\.module\.[a-zA-Z0-9]+$/;
 function transformCSSModuleExports(cssModuleExports) {
+    let module = "";
+    const transformedKeys = new Map();
     const keys = Object.keys(cssModuleExports || {});
-    let file = "";
-    keys.forEach((key) => {
-        file += `export const ${key} = "${cssModuleExports[key].name};"\n`;
+    const cleanKeys = keys.map((key) => {
+        let k = key;
+        if (key.includes("-")) {
+            k = key.replace(/-/g, "_");
+            transformedKeys.set(k, key);
+        }
+        return k;
     });
-    if (keys.length > 0) {
-        file += `export default { ${keys.join(", ")} }\n`;
-    }
-    else {
-        return "const unused = ''; export default { unused };";
-    }
-    return file;
+    keys.forEach((key, i) => {
+        module += `export const ${cleanKeys[i]} = "${cssModuleExports[key].name}";\n`;
+    });
+    return {
+        module,
+        transformedKeys,
+    };
 }
 function tranform(options) {
     return new Promise((resolve, reject) => {
         let { code, map, dependencies, exports } = css_1.default.transform(options);
+        const { module, transformedKeys } = transformCSSModuleExports(exports || {});
+        console.log(module);
         resolve({
             id: options.filename,
-            code: exports == null ? "" : transformCSSModuleExports(exports),
+            code: module,
             map: (map && map.toString()) || "",
             transformedCode: code.toString(),
+            transformedKeys,
             dependencies,
         });
     });
@@ -81,6 +90,7 @@ function plugin(options = {}) {
             cache.set(fileName, {
                 source: preprocess.css,
                 isModule: isCssModule,
+                transformedKeys: result.transformedKeys,
             });
             return {
                 code: result.code,
@@ -106,8 +116,12 @@ function plugin(options = {}) {
             const results = await Promise.all(Array.from(cssNonModuleIds.keys())
                 .concat(cssModuleIds)
                 .map((id) => {
-                const { source = "", isModule = false } = cache.get(id) || {};
-                const unusedSymbols = modules[id]?.removedExports ?? [];
+                const { source = "", isModule = false, transformedKeys, } = cache.get(id) || {};
+                const unusedSymbols = (0, utils_1.ensureArray)(modules[id]?.removedExports).map((name) => {
+                    return transformedKeys != null && transformedKeys.has(name)
+                        ? transformedKeys.get(name) || name
+                        : name;
+                });
                 return tranform({
                     filename: id,
                     code: Buffer.from(source),

@@ -30,12 +30,14 @@ export type TransformResult = {
   code: string;
   map: string;
   transformedCode: string;
+  transformedKeys: Map<string, string>;
   dependencies: void | Dependency[];
 };
 
 export type Cache = {
   source: string;
   isModule: boolean;
+  transformedKeys: TransformResult["transformedKeys"];
 };
 
 export type LoaderName = "sass" | "less";

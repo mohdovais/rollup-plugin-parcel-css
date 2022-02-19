@@ -1,6 +1,6 @@
 import path from "path";
 import css from "@parcel/css";
-import { base64, mergeSourceMaps } from "./utils";
+import { base64, ensureArray, mergeSourceMaps } from "./utils";
 import { hasLoaderForFile, resolveLoaders, runLoaders } from "./loaders";
 import { createFilter } from "rollup-pluginutils";
 import type { Plugin } from "rollup";
@@ -11,28 +11,44 @@ const cssRe = /\.css$/;
 const moduleRe = /\.module\.[a-zA-Z0-9]+$/;
 
 function transformCSSModuleExports(cssModuleExports: CSSModuleExports) {
+  let module = "";
+  const transformedKeys = new Map<string, string>();
   const keys = Object.keys(cssModuleExports || {});
-  let file = "";
-  keys.forEach((key) => {
-    file += `export const ${key} = "${cssModuleExports[key].name};"\n`;
+  const cleanKeys = keys.map((key) => {
+    let k = key;
+    if (key.includes("-")) {
+      k = key.replace(/-/g, "_");
+      transformedKeys.set(k, key);
+    }
+    return k;
   });
-  if (keys.length > 0) {
-    file += `export default { ${keys.join(", ")} }\n`;
-  } else {
-    return "const unused = ''; export default { unused };";
-  }
-  return file;
+
+  keys.forEach((key, i) => {
+    module += `export const ${cleanKeys[i]} = "${cssModuleExports[key].name}";\n`;
+  });
+
+  return {
+    module,
+    transformedKeys,
+  };
 }
 
 function tranform(options: TransformOptions): Promise<TransformResult> {
   return new Promise((resolve, reject) => {
     let { code, map, dependencies, exports } = css.transform(options);
 
+    const { module, transformedKeys } = transformCSSModuleExports(
+      exports || {}
+    );
+
+    console.log(module);
+
     resolve({
       id: options.filename,
-      code: exports == null ? "" : transformCSSModuleExports(exports),
+      code: module,
       map: (map && map.toString()) || "",
       transformedCode: code.toString(),
+      transformedKeys,
       dependencies,
     });
   });
@@ -92,6 +108,7 @@ function plugin(options: PluginOptions = {}): Plugin {
       cache.set(fileName, {
         source: preprocess.css,
         isModule: isCssModule,
+        transformedKeys: result.transformedKeys,
       });
 
       return {
@@ -121,8 +138,18 @@ function plugin(options: PluginOptions = {}): Plugin {
         Array.from(cssNonModuleIds.keys())
           .concat(cssModuleIds)
           .map((id) => {
-            const { source = "", isModule = false } = cache.get(id) || {};
-            const unusedSymbols = modules[id]?.removedExports ?? [];
+            const {
+              source = "",
+              isModule = false,
+              transformedKeys,
+            } = cache.get(id) || {};
+            const unusedSymbols = ensureArray(modules[id]?.removedExports).map(
+              (name) => {
+                return transformedKeys != null && transformedKeys.has(name)
+                  ? transformedKeys.get(name) || name
+                  : name;
+              }
+            );
 
             return tranform({
               filename: id,

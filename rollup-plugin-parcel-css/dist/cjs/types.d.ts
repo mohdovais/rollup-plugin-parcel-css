@@ -25,11 +25,13 @@ export declare type TransformResult = {
     code: string;
     map: string;
     transformedCode: string;
+    transformedKeys: Map<string, string>;
     dependencies: void | Dependency[];
 };
 export declare type Cache = {
     source: string;
     isModule: boolean;
+    transformedKeys: TransformResult["transformedKeys"];
 };
 export declare type LoaderName = "sass" | "less";
 export interface Loader<T = any> {

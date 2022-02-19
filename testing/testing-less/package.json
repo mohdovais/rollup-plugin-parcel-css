@@ -1,0 +1,23 @@
+{
+  "name": "@testing/less",
+  "private": true,
+  "description": "",
+  "scripts": {
+    "build": "npx rollup -c"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohdovais/rollup-plugin-parcel-css.git"
+  },
+  "author": "Mohd Ovais",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mohdovais/rollup-plugin-parcel-css/issues"
+  },
+  "homepage": "https://github.com/mohdovais/rollup-plugin-parcel-css#readme",
+  "dependencies": {
+    "bootstrap": "^3.4.1",
+    "less": "^4.1.2",
+    "rollup": "^2.67.3"
+  }
+}
