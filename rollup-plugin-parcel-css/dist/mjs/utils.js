@@ -13,7 +13,7 @@ function runtimeRequire(module) {
         return require(module);
     }
     catch (e) {
-        throw `Module ${module} is not installed.`;
+        throw `Module ${module} is not installed. Please run "npm i ${module} -D"`;
     }
 }
 function base64(str) {

@@ -5,7 +5,7 @@ import { hasLoaderForFile, resolveLoaders, runLoaders } from "./loaders";
 import { createFilter } from "rollup-pluginutils";
 import type { Plugin } from "rollup";
 import type { TransformOptions, CSSModuleExports } from "@parcel/css";
-import type { Cache, Lang, PluginOptions, TransformResult } from "./types";
+import type { Cache, PluginOptions, TransformResult } from "./types";
 
 const cssRe = /\.css$/;
 const moduleRe = /\.module\.[a-zA-Z0-9]+$/;
@@ -40,7 +40,7 @@ function tranform(options: TransformOptions): Promise<TransformResult> {
 
 function plugin(options: PluginOptions = {}): Plugin {
   const rollupFilter = createFilter(options.include, options.exclude);
-  const { minify = false } = options;
+  const { minify = false, targets, cssModules, pseudoClasses } = options;
   const cache = new Map<string, Cache>();
   const seenNonCSSModuleIds = new Map<string, string[]>();
   const loaders = resolveLoaders(options.loaders);
@@ -73,19 +73,25 @@ function plugin(options: PluginOptions = {}): Plugin {
         return null;
       }
 
-      const cssModules = moduleRe.test(fileName);
+      const isCssModule = cssModules || moduleRe.test(fileName);
       const preprocess = await runLoaders(loaders, code, fileName);
+
+      preprocess.dependencies?.forEach((id) => {
+        this.addWatchFile(id);
+      });
 
       const result = await tranform({
         code: Buffer.from(preprocess.css),
         filename: fileName,
-        cssModules,
+        cssModules: isCssModule,
         analyzeDependencies: true,
+        targets,
+        pseudoClasses,
       });
 
       cache.set(fileName, {
         source: preprocess.css,
-        isModule: cssModules,
+        isModule: isCssModule,
       });
 
       return {
@@ -125,6 +131,8 @@ function plugin(options: PluginOptions = {}): Plugin {
               cssModules: isModule,
               unusedSymbols,
               minify,
+              pseudoClasses,
+              targets,
             });
           })
       );

@@ -19,7 +19,7 @@ function runtimeRequire<T>(module: string) {
     require.resolve(module);
     return require(module) as T;
   } catch (e) {
-    throw `Module ${module} is not installed.`;
+    throw `Module ${module} is not installed. Please run "npm i ${module} -D"`;
   }
 }
 

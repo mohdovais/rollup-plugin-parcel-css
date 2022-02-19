@@ -2,23 +2,25 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.runLoaders = exports.hasLoaderForFile = exports.resolveLoaders = void 0;
 const utils_1 = require("./utils");
-const sass_loader_1 = require("./sass-loader");
+const loader_sass_1 = require("./loader-sass");
+const loader_less_1 = require("./loader-less");
 function applyLoadersConfig(config) {
     if (typeof config === "string") {
         switch (config) {
             case "sass":
-                return sass_loader_1.sassLoader;
+                return loader_sass_1.sassLoader;
             case "less":
-            //@TODO
+                return loader_less_1.lessLoader;
+            default:
+                throw "Unknown loader " + config;
         }
-        throw "Unknown loader " + config;
     }
     else if (config != null) {
         switch (config.type) {
             case "sass":
-                return Object.assign({}, sass_loader_1.sassLoader, config);
+                return Object.assign({}, loader_sass_1.sassLoader, config);
             case "less":
-            //@TODO
+                return Object.assign({}, loader_less_1.lessLoader, config);
         }
     }
     return config;

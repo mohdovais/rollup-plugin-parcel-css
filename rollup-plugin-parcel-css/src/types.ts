@@ -1,9 +1,19 @@
-import type { Dependency } from "@parcel/css";
+import type { Dependency, TransformOptions, PseudoClasses } from "@parcel/css";
 
 const CSS = "css";
 const SASS = "sass";
 const LESS = "less";
 const SCSS = "scss";
+
+export type PluginOptions = {
+  include?: string | RegExp | (string | RegExp)[];
+  exclude?: string | RegExp | (string | RegExp)[];
+  minify?: boolean;
+  targets?: TransformOptions["targets"];
+  cssModules?: boolean;
+  pseudoClasses?: PseudoClasses;
+  loaders?: LoaderName | Loader | (Loader | LoaderName)[];
+};
 
 export type Lang = typeof CSS | typeof SASS | typeof SCSS | typeof LESS;
 
@@ -21,13 +31,6 @@ export type TransformResult = {
   map: string;
   transformedCode: string;
   dependencies: void | Dependency[];
-};
-
-export type PluginOptions = {
-  include?: string | RegExp | (string | RegExp)[];
-  exclude?: string | RegExp | (string | RegExp)[];
-  minify?: boolean;
-  loaders?: LoaderName | LoaderName | (Loader | Loader)[];
 };
 
 export type Cache = {

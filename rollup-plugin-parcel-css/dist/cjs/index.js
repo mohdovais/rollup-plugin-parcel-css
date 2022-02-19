@@ -38,7 +38,7 @@ function tranform(options) {
 }
 function plugin(options = {}) {
     const rollupFilter = (0, rollup_pluginutils_1.createFilter)(options.include, options.exclude);
-    const { minify = false } = options;
+    const { minify = false, targets, cssModules, pseudoClasses } = options;
     const cache = new Map();
     const seenNonCSSModuleIds = new Map();
     const loaders = (0, loaders_1.resolveLoaders)(options.loaders);
@@ -65,18 +65,22 @@ function plugin(options = {}) {
             if (!filter(fileName)) {
                 return null;
             }
-            const cssModules = moduleRe.test(fileName);
+            const isCssModule = cssModules || moduleRe.test(fileName);
             const preprocess = await (0, loaders_1.runLoaders)(loaders, code, fileName);
-            console.log(fileName, preprocess.dependencies);
+            preprocess.dependencies?.forEach((id) => {
+                this.addWatchFile(id);
+            });
             const result = await tranform({
                 code: Buffer.from(preprocess.css),
                 filename: fileName,
-                cssModules,
+                cssModules: isCssModule,
                 analyzeDependencies: true,
+                targets,
+                pseudoClasses,
             });
             cache.set(fileName, {
                 source: preprocess.css,
-                isModule: cssModules,
+                isModule: isCssModule,
             });
             return {
                 code: result.code,
@@ -111,6 +115,8 @@ function plugin(options = {}) {
                     cssModules: isModule,
                     unusedSymbols,
                     minify,
+                    pseudoClasses,
+                    targets,
                 });
             }));
             let sources = results.map((r) => r.transformedCode).join("");

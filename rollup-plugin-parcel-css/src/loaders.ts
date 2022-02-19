@@ -1,6 +1,12 @@
 import { ensureArray } from "./utils";
-import { sassLoader } from "./sass-loader";
-import type { Loader, LoaderName, LoaderProcessResult } from "./types";
+import { sassLoader } from "./loader-sass";
+import { lessLoader } from "./loader-less";
+import type {
+  Loader,
+  LoaderName,
+  LoaderProcessResult,
+  PluginOptions,
+} from "./types";
 
 function applyLoadersConfig(config?: Loader | LoaderName) {
   if (typeof config === "string") {
@@ -8,23 +14,23 @@ function applyLoadersConfig(config?: Loader | LoaderName) {
       case "sass":
         return sassLoader;
       case "less":
-      //@TODO
+        return lessLoader;
+      default:
+        throw "Unknown loader " + config;
     }
-
-    throw "Unknown loader " + config;
   } else if (config != null) {
     switch (config.type) {
       case "sass":
         return Object.assign({}, sassLoader, config);
       case "less":
-      //@TODO
+        return Object.assign({}, lessLoader, config);
     }
   }
 
   return config;
 }
 
-function resolveLoaders(config?: Loader[] | Loader | LoaderName) {
+function resolveLoaders(config?: PluginOptions["loaders"]) {
   const x = ensureArray<Loader | LoaderName>(config);
   const loaders = new Map<string, Loader>();
 

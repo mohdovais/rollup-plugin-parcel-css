@@ -1,21 +1,23 @@
 import { ensureArray } from "./utils";
-import { sassLoader } from "./sass-loader";
+import { sassLoader } from "./loader-sass";
+import { lessLoader } from "./loader-less";
 function applyLoadersConfig(config) {
     if (typeof config === "string") {
         switch (config) {
             case "sass":
                 return sassLoader;
             case "less":
-            //@TODO
+                return lessLoader;
+            default:
+                throw "Unknown loader " + config;
         }
-        throw "Unknown loader " + config;
     }
     else if (config != null) {
         switch (config.type) {
             case "sass":
                 return Object.assign({}, sassLoader, config);
             case "less":
-            //@TODO
+                return Object.assign({}, lessLoader, config);
         }
     }
     return config;
