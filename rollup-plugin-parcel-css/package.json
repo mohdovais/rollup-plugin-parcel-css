@@ -21,8 +21,12 @@
   },
   "author": "Mohd Ovais",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mohdovais/rollup-plugin-parcel-css/issues"
+  },
+  "homepage": "https://github.com/mohdovais/rollup-plugin-parcel-css#readme",
   "files": [
-    "./dist/**"
+    "dist"
   ],
   "dependencies": {
     "rollup-pluginutils": "^2.8.2"
