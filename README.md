@@ -1,6 +1,6 @@
 # rollup-plugin-parcel-css
 
-A Rollup plugin plugin to use @parcel/css
+A Rollup plugin to use @parcel/css
 
 # Usage
 
