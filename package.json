@@ -3,20 +3,16 @@
   "private": true,
   "description": "",
   "scripts": {
-    "watch": "rollup -c -w",
-    "prebuild": "rm -rf build & npm run build -workspaces",
-    "build": "rollup -c",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "pretest": "npm run build -w rollup-plugin-parcel-css",
+    "test": "npm test -w testing"
   },
   "author": "Mohd Ovais",
   "license": "MIT",
-  "dependencies": {
-    "rollup": "^2.67.2"
-  },
   "engines": {
     "npm": ">=7"
   },
   "workspaces": [
-    "rollup-plugin-parcel-css"
+    "rollup-plugin-parcel-css",
+    "testing"
   ]
 }
