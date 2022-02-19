@@ -56,6 +56,27 @@ export default {
 };
 ```
 
+Sass [options](https://sass-lang.com/documentation/js-api/modules#StringOptions) can be provided:
+
+```javascript
+export default {
+  input: "./src/main.js",
+  output: {
+    file: "./build/app.js",
+    format: "iife",
+    sourcemap: true,
+  },
+  plugins: [
+    css({
+      loaders: {
+        type: "sass",
+        options: {},
+      },
+    }),
+  ],
+};
+```
+
 ## Less
 
 Enable Less Loader
