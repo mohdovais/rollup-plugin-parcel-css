@@ -1,6 +1,6 @@
 {
   "name": "rollup-plugin-parcel-css",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Rollup plugin for Parcel CSS",
   "keywords": [
     "rollup plugin",
