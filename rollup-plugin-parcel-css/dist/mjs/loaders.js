@@ -42,6 +42,7 @@ function hasLoaderForFile(loaders, fileName) {
     return false;
 }
 async function runLoaders(loaders, code, fileName, sourceMap) {
+    var _a;
     let result = {
         css: code,
         sourceMap,
@@ -53,7 +54,7 @@ async function runLoaders(loaders, code, fileName, sourceMap) {
             result = {
                 css,
                 sourceMap,
-                dependencies: result.dependencies?.concat(ensureArray(dependencies)),
+                dependencies: (_a = result.dependencies) === null || _a === void 0 ? void 0 : _a.concat(ensureArray(dependencies)),
             };
         }
     }

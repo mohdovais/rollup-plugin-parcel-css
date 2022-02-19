@@ -41,8 +41,6 @@ function tranform(options: TransformOptions): Promise<TransformResult> {
       exports || {}
     );
 
-    console.log(module);
-
     resolve({
       id: options.filename,
       code: module,

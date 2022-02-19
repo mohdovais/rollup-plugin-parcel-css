@@ -3,7 +3,7 @@
   "private": true,
   "description": "",
   "scripts": {
-    "pretest": "npm run build -w rollup-plugin-parcel-css",
+    "pretest": "rm -rf test_builds & npm run build -w rollup-plugin-parcel-css",
     "test": "npm run build -workspaces"
   },
   "author": "Mohd Ovais",

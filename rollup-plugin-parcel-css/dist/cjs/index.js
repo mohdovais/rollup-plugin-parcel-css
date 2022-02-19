@@ -34,7 +34,6 @@ function tranform(options) {
     return new Promise((resolve, reject) => {
         let { code, map, dependencies, exports } = css_1.default.transform(options);
         const { module, transformedKeys } = transformCSSModuleExports(exports || {});
-        console.log(module);
         resolve({
             id: options.filename,
             code: module,

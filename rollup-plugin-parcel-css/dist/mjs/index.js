@@ -29,7 +29,6 @@ function tranform(options) {
     return new Promise((resolve, reject) => {
         let { code, map, dependencies, exports } = css.transform(options);
         const { module, transformedKeys } = transformCSSModuleExports(exports || {});
-        console.log(module);
         resolve({
             id: options.filename,
             code: module,
@@ -66,12 +65,13 @@ function plugin(options = {}) {
             return null;
         },
         async transform(code, fileName) {
+            var _a;
             if (!filter(fileName)) {
                 return null;
             }
             const isCssModule = cssModules || moduleRe.test(fileName);
             const preprocess = await runLoaders(loaders, code, fileName);
-            preprocess.dependencies?.forEach((id) => {
+            (_a = preprocess.dependencies) === null || _a === void 0 ? void 0 : _a.forEach((id) => {
                 this.addWatchFile(id);
             });
             const result = await tranform({
@@ -111,8 +111,9 @@ function plugin(options = {}) {
             const results = await Promise.all(Array.from(cssNonModuleIds.keys())
                 .concat(cssModuleIds)
                 .map((id) => {
+                var _a;
                 const { source = "", isModule = false, transformedKeys, } = cache.get(id) || {};
-                const unusedSymbols = ensureArray(modules[id]?.removedExports).map((name) => {
+                const unusedSymbols = ensureArray((_a = modules[id]) === null || _a === void 0 ? void 0 : _a.removedExports).map((name) => {
                     return transformedKeys != null && transformedKeys.has(name)
                         ? transformedKeys.get(name) || name
                         : name;
