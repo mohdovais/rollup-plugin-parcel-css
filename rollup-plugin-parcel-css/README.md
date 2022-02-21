@@ -38,7 +38,33 @@ export type PluginOptions = {
 
 ## CSS Modules
 
-By default any file with name `.module.*` will be treated as CSS module. Setting option `cssModules: true` will force all files to be treated as CSS module
+By default any file with name `.module.*` will be treated as CSS module. Setting option `cssModules: true` will force all files to be treated as CSS module. 
+
+`./component.module.css`
+```css
+.colorMeRed {
+  color: red;
+}
+```
+
+`./component.js`
+```js
+import { colorMeRed } from './component.module.css';
+
+...
+...
+
+```
+
+The selectors are named exported, *Not default*, so if we need `style.colorMeRed` then we can write 
+
+```js
+import * as style from './component.module.css';
+
+```
+
+Since hypen `-` cannot be used in JavaScript variable declarations, it is replaced with underscore `_`.  E.g. `.color-me-red` will be exported as `color_me_red`.
+
 
 ## Sass
 
